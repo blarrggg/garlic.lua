@@ -43,7 +43,40 @@ Creating a frame:
 local frame1 = garlic.newFrame(0, 0, 32, 32)
 ```
 
-The first two arguments are the X & Y position coordinates of the frame. The other two simply defines its size.
-
 # Functions
 
+## Actor Functions
+```garlic.newActor(spritesheet)```
+Creates a new actor with the given spritesheet.
+
+```actor.attachAnimation(animation)```
+Attaches an animation to the actor.
+
+```actor.playAnimation(id)```
+Plays the animation with the given ```id```. Resets playback to the first frame.
+
+```actor.stopAnimation(id)```
+Stops the animation with the given ```id```. Resets playback to the first frame.
+
+```actor.pauseAnimation(id)```
+Pauses the animation with the given ```id```.
+
+```actor.resumeAnimation(id)```
+Resumes playback of the animation with the given ```id```.
+
+```actor.update(dt)```
+Updates the actor.
+
+```actor.draw(fallbackAnim, ...)```
+Draws the actor. Whichever animation gets displayed is based on whatever's currently playing with the highest priority. If none are playing, it will default to the ```fallbackAnim``` to display.
+
+## Animation Functions
+```garlic.newAnimation(id, priority, speed, loop, loopback)```
+Creates a new animation with the specified properties.
+
+```animation.attachFrame(frame)```
+Adds a frame to the animation.
+
+## Frame Functions
+```garlic.newFrame(x, y, w, h)```
+Creates a new frame from the specific position and size on the spritesheet.

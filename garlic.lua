@@ -1,81 +1,97 @@
-local module = {}
-module._version = 1
+--[[
 
-function module.newActor(spritesheet)
+MIT License
+
+Copyright (c) 2024 blarg!
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+]]
+
+local garlic = { _VERSION = '1' }
+
+function garlic.newActor(spritesheet)
+
     local spritesheet = spritesheet
 
     local AvailableAnimations = {}
-    local methods = {}
 
-    local DisplayingAnim = nil
+    local actor = {}
+    function actor.getSpritesheet() return spritesheet end
 
-    function methods.findAnimation(id)
-        for k,v in pairs(AvailableAnimations) do
-            if v.id == id then
-                return v,k
-            end
-        end
-    end
+    function actor.attachAnimation(anim)
+        assert(not AvailableAnimations[anim.id], 'Animation w/ same ID already exists.')
 
-    function methods.destroyAnimation(id)
-        local _,key = methods.findAnimation(id)
-        table.remove(AvailableAnimations,key)
-    end
-    
-    function methods.newAnimation(id)
-        assert(not methods.findAnimation(id),'Animation with ID ' .. id .. ' already exists!')
-        if not DisplayingAnim then DisplayingAnim = id end
+        local newAnim = {}
+        newAnim.priority,newAnim.speed,newAnim.loop,newAnim.loopback = anim.priority,anim.speed,anim.loop,anim.loopback
+        newAnim.playing = false
 
-        local Frames = {}
+        newAnim.frames = {}
+        newAnim.currentFrame = 1
 
-        local anim = {}
-
-        function anim.newFrame(x,y,w,h)
-            local nQuad = love.graphics.newQuad(x,y,w,h,spritesheet:getWidth(),spritesheet:getHeight())
-
-            Frames[#Frames+1] = nQuad
-            return nQuad
-        end
-        function anim.getFrames() return Frames end
-
-        function anim.play()
-            if DisplayingAnim then
-                local oldAnim = methods.findAnimation(DisplayingAnim)
-                if anim.priority > oldAnim.priority then
-                    DisplayingAnim = anim.id
-                end
-            end
-
-            anim.frame = 1
-            anim.playing = true
+        for k,v in pairs(anim.frames) do
+            newAnim.frames[k] = love.graphics.newQuad(v.x,v.y,v.w,v.h,spritesheet:getWidth(),spritesheet:getHeight())
         end
 
-        anim.id = id
-        anim.priority = 0
-        anim.frame = 1
-        anim.speed = 5
-        anim.playing = false
-        anim.looping = false
-        anim.loopback = false -- should animation return to frame 0 when it is done? (only active if looping is false)
-
-        return anim
+        AvailableAnimations[anim.id] = newAnim
+        return newAnim
     end
 
-    function methods.update(dt)
+    function actor.playAnimation(id)
+        local Anim = AvailableAnimations[id]
+
+        Anim.playing = true
+        Anim.currentFrame = 1
+    end
+    function actor.resumeAnimation(id)
+        AvailableAnimations[id].playing = true
+    end
+    function actor.stopAnimation(id)
+        local Anim = AvailableAnimations[id]
+
+        Anim.playing = false
+        Anim.currentFrame = 1
+    end
+    function actor.pauseAnimation(id)
+        AvailableAnimations[id].playing = false
+    end
+    function actor.getAnimation(id)
+        return AvailableAnimations[id]
+    end
+    function actor.getAnimations()
+        return AvailableAnimations
+    end
+
+    function actor.update(dt)
         for k,v in pairs(AvailableAnimations) do
             if v.playing then
-                v.frame = v.frame + (dt*v.speed)
+                v.currentFrame = v.currentFrame + (v.speed*dt)
 
-                local crntFrames = #v.getFrames()
-                if v.frame >= crntFrames then
-                    if v.looping then
-                        v.frame = 1
-                        v.playing = true
-                    elseif v.loopback then
-                        v.frame = 1
+                if v.currentFrame >= (#v.frames + 1) then
+                    if v.loopback then
+                        v.currentFrame = 1
                         v.playing = false
+                    elseif v.loop then
+                        v.currentFrame = 1
+                        v.playing = true
                     else
-                        v.frame = crntFrames
+                        v.currentFrame = #v.frames
                         v.playing = false
                     end
                 end
@@ -83,12 +99,67 @@ function module.newActor(spritesheet)
         end
     end
 
-    function methods.draw(...)
-        local DisplayingAnimation = methods.findAnimation(DisplayingAnim)
-        love.graphics.draw(DisplayingAnimation.getFrames()[ math.floor(DisplayingAnimation.frame ) ],unpack({...}))
+    function actor.draw(fallbackAnim,...)
+        local ChosenAnimationToDraw = nil
+        local currentPriority = nil
+        for k,v in pairs(AvailableAnimations) do
+            if v.playing then
+                if not ChosenAnimationToDraw and not currentPriority then
+                    ChosenAnimationToDraw = v
+                    currentPriority = v.priority
+                else
+                    if currentPriority < v.priority then
+                        ChosenAnimationToDraw,currentPriority = v,v.priority
+                    end
+                end
+            end
+        end
+
+        if not ChosenAnimationToDraw then -- if the displayed animation is STILL nill, try to draw a fallback animation
+            local fallback = AvailableAnimations[fallbackAnim]
+            love.graphics.draw(spritesheet,fallback.frames[ math.floor(fallback.currentFrame) ], unpack({...}))
+            return 0
+        end
+        -- otherwise, play the animation like normal
+        love.graphics.draw(spritesheet,ChosenAnimationToDraw.frames[math.floor(ChosenAnimationToDraw.currentFrame)], unpack({...}))
+        return 0
     end
 
-    return methods
+    return actor
+
 end
 
-return module
+function garlic.newAnimation(id,priority,speed,loop,loopback)
+    local animation = {}
+
+    animation.frames = {}
+    function animation.attachFrame(frame)
+        local FrameIndex = #animation.frames + 1
+
+        local newFrame = {}
+        newFrame.x,newFrame.y,newFrame.w,newFrame.h = frame.x,frame.y,frame.w,frame.h
+
+        animation.frames[FrameIndex] = newFrame
+    end
+
+    animation.id = id
+    animation.priority = priority or 1
+    animation.speed = speed or 1
+    animation.loop = loop or false
+    animation.loopback = loopback or false -- makes animation immediately go back to frame 1 when it finishes
+
+    return animation
+end
+
+function garlic.newFrame(x,y,w,h)
+    local frame = {}
+
+    frame.x = x or 0
+    frame.y = y or 0
+    frame.w = w or 0
+    frame.h = h or 0
+
+    return frame
+end
+
+return garlic

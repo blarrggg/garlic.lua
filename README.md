@@ -70,6 +70,12 @@ Updates the actor.
 ```actor.draw(fallbackAnim, ...)```
 Draws the actor. Whichever animation gets displayed is based on whatever's currently playing with the highest priority. If none are playing, it will default to the ```fallbackAnim``` to display.
 
+```actor.getAnimations()```
+Returns a table of all attached animations.
+
+```actor.getAnimation(id)```
+Returns the animation with the given ```id```, if there is one.
+
 ## Animation Functions
 ```garlic.newAnimation(id, priority, speed, loop, loopback)```
 Creates a new animation with the specified properties.

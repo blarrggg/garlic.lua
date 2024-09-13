@@ -49,6 +49,9 @@ local frame1 = garlic.newFrame(0, 0, 32, 32)
 ```garlic.newActor(spritesheet)```
 Creates a new actor with the given spritesheet.
 
+```actor.getSpritesheet()```
+Returns the spritesheet being used by the actor.
+
 ```actor.attachAnimation(animation)```
 Attaches an animation to the actor.
 

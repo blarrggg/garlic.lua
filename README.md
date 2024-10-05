@@ -12,7 +12,7 @@ actor.attachAnimation(anim1)
 actor.attachAnimation(anim2)
 ```
 
-Creating an actor only takes in a singular Image argument.
+Creating an actor only takes in a singular [Image](https://love2d.org/wiki/Image) argument.
 
 # Animations
 Animations are a collection of frames that are played one after another during playback. When an animation is created, it starts as an empty sequence of frames. You must define and attach frames to it manually.
@@ -36,12 +36,13 @@ Creating an animation requires five arguments (actually, everything beyond the f
 ```
 
 # Frames
-A Frame is a singular image of a spritesheet that will be drawn to the screen, and are defined as Quads. They are the most basic unit of an actor.
+A Frame is a singular image of a spritesheet that will be drawn to the screen. They get automatically defined as [Quads](https://love2d.org/wiki/Quad) once they have been attached to an Actor. They are the most basic unit in this library.
 
 Creating a frame:
 ```lua
-local frame1 = garlic.newFrame(0, 0, 32, 32)
+local frame1 = garlic.newFrame(0, 0, 32, 32, function() print("Hello! :)") end)
 ```
+That last argument (which is optional, mind you!), defined as a function, automatically gets executed once the Frame has been cycled through by an Actor.
 
 # Functions
 
@@ -87,5 +88,15 @@ Creates a new animation with the specified properties.
 Adds a frame to the animation.
 
 ## Frame Functions
-```garlic.newFrame(x, y, w, h)```
+```garlic.newFrame(x, y, w, h, func)```
 Creates a new frame from the specific position and size on the spritesheet.
+"`func`" argument is optional.
+
+```frame.attachFunction(func)```
+Attaches a function to the Frame. Will automatically be executed when the Frame has been cycled through by an Actor.
+
+```frame.getFunction()```
+Returns the attached function. If there isn't anything attached, it will simply return `nil`.
+
+```frame.destroyFunction()```
+Removes the attached function, setting it to `nil`.

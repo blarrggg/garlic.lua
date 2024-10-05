@@ -17,8 +17,16 @@ function love.load()
 
     -- declaring moving animation
     local moveAnimation = garlic.newAnimation('move',2,10,true,false)
-    for _,v in pairs(adventurerFile.moving) do
-        moveAnimation.attachFrame( garlic.newFrame(v.x, v.y, v.w, v.h) )
+    for i,v in pairs(adventurerFile.moving) do
+        local attachedFunc = nil
+
+        if i == 2 or i == 5 then
+            attachedFunc = function()
+                print('Footstep')
+            end
+        end
+
+        moveAnimation.attachFrame( garlic.newFrame(v.x, v.y, v.w, v.h, attachedFunc) )
     end
 
     -- declaring rolling animation
@@ -29,8 +37,14 @@ function love.load()
 
     -- declaring slashing animation
     local slashingAnimation = garlic.newAnimation('slashing',4,10,true,false)
-    for _,v in pairs(adventurerFile.slashing) do
-        slashingAnimation.attachFrame( garlic.newFrame(v.x,v.y,v.w,v.h) )
+    for i,v in pairs(adventurerFile.slashing) do
+        local attachedFunc = nil
+        if i == 7 then
+            attachedFunc = function()
+                print 'Slashing animation ended!'
+            end
+        end
+        slashingAnimation.attachFrame( garlic.newFrame(v.x,v.y,v.w,v.h,attachedFunc) )
     end
 
     -- attaching those animations
